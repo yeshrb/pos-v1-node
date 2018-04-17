@@ -1,8 +1,9 @@
-const main = require('../main/main')();
+const main = require('../main/main');
 
 
 describe('pos', function () {
     let  inputs;
+    let order;
     beforeEach(function () {
         inputs = [
             'ITEM000001',
@@ -15,12 +16,17 @@ describe('pos', function () {
             'ITEM000005',
             'ITEM000005'
         ];
-    });
+        order = main(inputs);
+    }
+
+    );
+
+
 
     it('shuld sum same item', function () {
         let expt = {ITEM000001: 5, ITEM000003: 2, ITEM000005: 3};
 
-        expect(main.getCount(inputs)).toEqual(expt);
+        expect(order.getOrderItems()).toEqual(expt);
     });
 
 
@@ -48,7 +54,7 @@ describe('pos', function () {
                 number: 3
             }
         ];
-        expect(main.getOrder(inputs)).toEqual(ret);
+        expect(order.getOrderDetails()).toEqual(ret);
     });
 
     it('should not get Order Detail when code not exist in allItems', function () {
@@ -60,12 +66,13 @@ describe('pos', function () {
             number: 5
         }];
         let inp = ['ITEM000006-5'];
-        expect(main.getOrder(inp)).toEqual(expt);
+        let odr = main(inp);
+        expect(odr.getOrderDetails()).toEqual(expt);
     });
 
     it('should get promotions', function () {
         let expt = [{barcode: 'ITEM000001', number: 1}, {barcode: 'ITEM000005', number: 1}];
-        expect(main.getPromotion(inputs)).toEqual(expt);
+        expect(order.getPromotion(inputs)).toEqual(expt);
     });
 
     it('should build correct order list', function () {
@@ -75,7 +82,7 @@ describe('pos', function () {
             '名称：荔枝，数量：2斤，单价：15.00(元)，小计：30.00(元)\n' +
             '名称：方便面，数量：3袋，单价：4.50(元)，小计：9.00(元)\n';
 
-        expect(main.buildOrderList(inputs)).toEqual(expectText);
+        expect(order.buildOrderList(inputs)).toEqual(expectText);
     });
 
     it('should build correct promotion infoemation', function () {
@@ -85,7 +92,7 @@ describe('pos', function () {
             '名称：雪碧，数量：1瓶\n' +
             '名称：方便面，数量：1袋\n';
 
-        expect(main.buildPromotionInformation(inputs)).toEqual(expectText);
+        expect(order.buildPromotionInformation(inputs)).toEqual(expectText);
     });
 
     it('should build correct totalSummary infoemation', function () {
@@ -95,7 +102,7 @@ describe('pos', function () {
             '节省：7.50(元)\n' +
             '**********************';
 
-        expect(main.buildSummaryInfomation(inputs)).toEqual(expectText);
+        expect(order.buildSummaryInfomation(inputs)).toEqual(expectText);
     });
 
 
@@ -103,7 +110,7 @@ describe('pos', function () {
 
         spyOn(console, 'log');
 
-        main.printInventory(inputs);
+        order.printInventory(inputs);
 
         let  expectText =
             '***<没钱赚商店>购物清单***\n' +

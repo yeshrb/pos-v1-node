@@ -1,42 +1,17 @@
 const loadAllItems = require('../main/datbase').loadAllItems;
-const loadPromotions = require('../main/datbase').loadPromotions;
+const allPromotions = require('../main/datbase').loadPromotions();
 
-const main = function () {
-
+const main = function (items) {
+    let order = getOrder(items);
+    let orderItems = getCount(items)
     return {
-        getCount: function (inputs) {
-            inputs = inputs || [];
-            return inputs.reduce((pre, curr) => {
-                if (curr.indexOf('-') > -1)
-                    pre[curr.split('-')[0].trim()] = parseInt(curr.split('-')[1]);
-                else if (pre[curr]) pre[curr]++;
-                else pre[curr] = 1;
-                return pre;
-            }, {});
-          },
-        getOrder: function (inputs) {
-            let items = this.getCount(inputs);
-            let allItems = loadAllItems();
-            return Object.keys(items).reduce((acc, curr) => {
-                let orderItem = {barcode: curr, number: items[curr], name: '', unit: '', price: ''};
-                allItems.forEach(item => {
-                    if (item.barcode === orderItem.barcode) {
-                        orderItem.name = item.name;
-                        orderItem.unit = item.unit;
-                        orderItem.price = item.price;
-                    }
-                });
-                acc.push(orderItem);
-                return acc;
-            }, []);
-        },
+        getOrderItems:  () => {return orderItems},
+        getOrderDetails:  ()=> {return order},
 
         getPromotion: function (inputs) {
-            let allPromotionsBarcode = loadPromotions();
-            let items = this.getCount(inputs);
-
+            let items = this.getOrderItems();
             return Object.keys(items).reduce((accu, curr) => {
-                 allPromotionsBarcode.forEach((promotion) => {
+                 allPromotions.forEach((promotion) => {
                     if(promotion.barcodes.indexOf(curr.trim()) > -1 && items[curr] >2)
                         accu.push({barcode: curr, number: 1});
                     } );
@@ -44,7 +19,7 @@ const main = function () {
                 }, []);
         },
         buildOrderList:function (inputs) {
-            let orders = this.getOrder(inputs);
+            let orders = this.getOrderDetails(inputs);
             let promotions = this.getPromotion(inputs);
             return orders.reduce((acc,curr) =>{
                 let summary = curr.price * curr.number;
@@ -58,7 +33,7 @@ const main = function () {
         },
         buildPromotionInformation:function (inputs) {
             let promotions = this.getPromotion(inputs);
-            let orders = this.getOrder(inputs);
+            let orders = this.getOrderDetails(inputs);
 
             return promotions.reduce((accu,curr)=> {
                 let orderItem = orders.filter((odr)=>{
@@ -72,7 +47,7 @@ const main = function () {
         },
         buildSummaryInfomation:function (inputs) {
             let promotions = this.getPromotion(inputs);
-            let orders = this.getOrder(inputs);
+            let orders = this.getOrderDetails(inputs);
             let obj = orders.reduce((accu,curr) =>{
                 let currSummary = curr.price * curr.number;
                 promotions.forEach(it => {
@@ -100,4 +75,29 @@ const main = function () {
     }
 };
 
+function getCount (inputs) {
+    inputs = inputs || [];
+    return inputs.reduce((pre, curr) => {
+        if (curr.indexOf('-') > -1)
+            pre[curr.split('-')[0].trim()] = parseInt(curr.split('-')[1]);
+        else if (pre[curr]) pre[curr]++;
+        else pre[curr] = 1;
+        return pre;
+    }, {})};
+function getOrder(inputs) {
+    let items = getCount(inputs);
+    let allItems = loadAllItems();
+    return Object.keys(items).reduce((acc, curr) => {
+        let orderItem = {barcode: curr, number: items[curr], name: '', unit: '', price: ''};
+        allItems.forEach(item => {
+            if (item.barcode === orderItem.barcode) {
+                orderItem.name = item.name;
+                orderItem.unit = item.unit;
+                orderItem.price = item.price;
+            }
+        });
+        acc.push(orderItem);
+        return acc;
+    }, []);
+};
 module.exports = main;

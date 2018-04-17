@@ -1,36 +1,13 @@
-const Main = require('../main/main');
 const Order = require('../main/order');
+const order = require('./test-data');
+describe('order', function () {
 
-describe('pos', function () {
-    let inputs;
-    let order;
-    let main;
-    beforeEach(function () {
-            inputs = [
-                'ITEM000001',
-                'ITEM000001',
-                'ITEM000001',
-                'ITEM000001',
-                'ITEM000001',
-                'ITEM000003-2',
-                'ITEM000005',
-                'ITEM000005',
-                'ITEM000005'
-            ];
-            order = Order(inputs);
-            main = Main(order);
-        }
-    );
-
-
-    it('shuld sum same item', function () {
+     it('shuld sum same item', function () {
         let expt = {ITEM000001: 5, ITEM000003: 2, ITEM000005: 3};
-
         expect(order.getOrderItems()).toEqual(expt);
     });
 
-
-    it('should get Order Detail', function () {
+    it('should get order details', function () {
         let ret = [
             {
                 barcode: 'ITEM000001',
@@ -57,7 +34,7 @@ describe('pos', function () {
         expect(order.getOrderDetails()).toEqual(ret);
     });
 
-    it('should not get Order Detail when code not exist in allItems', function () {
+    it('should not get detail when code not exist in allItems', function () {
         let expt = [{
             barcode: 'ITEM000006',
             name: '',
@@ -66,7 +43,7 @@ describe('pos', function () {
             number: 5
         }];
         let inp = ['ITEM000006-5'];
-        let odr = Order(inp);
+        let odr = new Order(inp);
         expect(odr.getOrderDetails()).toEqual(expt);
     });
 
@@ -75,57 +52,5 @@ describe('pos', function () {
         expect(order.getOrderPromotion()).toEqual(expt);
     });
 
-    it('should build correct order list', function () {
-        let expectText =
-            '***<没钱赚商店>购物清单***\n' +
-            '名称：雪碧，数量：5瓶，单价：3.00(元)，小计：12.00(元)\n' +
-            '名称：荔枝，数量：2斤，单价：15.00(元)，小计：30.00(元)\n' +
-            '名称：方便面，数量：3袋，单价：4.50(元)，小计：9.00(元)\n';
 
-        expect(main.buildOrderList()).toEqual(expectText);
-    });
-
-    it('should build correct promotion infoemation', function () {
-        let expectText =
-            '----------------------\n' +
-            '挥泪赠送商品：\n' +
-            '名称：雪碧，数量：1瓶\n' +
-            '名称：方便面，数量：1袋\n';
-
-        expect(main.buildPromotionInformation(inputs)).toEqual(expectText);
-    });
-
-    it('should build correct totalSummary infoemation', function () {
-        let expectText =
-            '----------------------\n' +
-            '总计：51.00(元)\n' +
-            '节省：7.50(元)\n' +
-            '**********************';
-
-        expect(main.buildSummaryInfomation(inputs)).toEqual(expectText);
-    });
-
-
-    it('should print correct text', function () {
-
-        spyOn(console, 'log');
-
-        main.printInventory(inputs);
-
-        let expectText =
-            '***<没钱赚商店>购物清单***\n' +
-            '名称：雪碧，数量：5瓶，单价：3.00(元)，小计：12.00(元)\n' +
-            '名称：荔枝，数量：2斤，单价：15.00(元)，小计：30.00(元)\n' +
-            '名称：方便面，数量：3袋，单价：4.50(元)，小计：9.00(元)\n' +
-            '----------------------\n' +
-            '挥泪赠送商品：\n' +
-            '名称：雪碧，数量：1瓶\n' +
-            '名称：方便面，数量：1袋\n' +
-            '----------------------\n' +
-            '总计：51.00(元)\n' +
-            '节省：7.50(元)\n' +
-            '**********************';
-
-        expect(console.log).toHaveBeenCalledWith(expectText);
-    });
 });

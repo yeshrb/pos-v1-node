@@ -3,7 +3,7 @@ const allPromotions = require('../main/datbase').loadPromotions();
 
 const main = function (items) {
     let order = getOrder(items);
-    let orderItems = getCount(items)
+    let orderItems = getCount(items);
     return {
         getOrderItems:  () => {return orderItems},
         getOrderDetails:  ()=> {return order},

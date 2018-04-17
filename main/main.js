@@ -1,46 +1,103 @@
 const loadAllItems = require('../main/datbase').loadAllItems;
-var main = function () {
+const loadPromotions = require('../main/datbase').loadPromotions;
+
+const main = function () {
+
     return {
         getCount: function (inputs) {
             inputs = inputs || [];
-           let ret = inputs.reduce((pre, curr) => {
+            return inputs.reduce((pre, curr) => {
                 if (curr.indexOf('-') > -1)
-                   pre[curr.split('-')[0].trim()] = parseInt(curr.split('-')[1]);
-                else if (pre[curr])  pre[curr]++;
-                else  pre[curr] = 1;
+                    pre[curr.split('-')[0].trim()] = parseInt(curr.split('-')[1]);
+                else if (pre[curr]) pre[curr]++;
+                else pre[curr] = 1;
                 return pre;
             }, {});
-            return ret;
-        },
-        getOrder:function (inputs) {
+          },
+        getOrder: function (inputs) {
             let items = this.getCount(inputs);
             let allItems = loadAllItems();
-            return Object.keys(items).reduce((acc,curr)=>{
+            return Object.keys(items).reduce((acc, curr) => {
+                let orderItem = {barcode: curr, number: items[curr], name: '', unit: '', price: ''};
                 allItems.forEach(item => {
-                    if(item.barcode == curr){
-                        item['number'] =items[curr] ;
-                        acc.push(item);
+                    if (item.barcode === orderItem.barcode) {
+                        orderItem.name = item.name;
+                        orderItem.unit = item.unit;
+                        orderItem.price = item.price;
                     }
-                })
+                });
+                acc.push(orderItem);
                 return acc;
-            },[]);
+            }, []);
         },
-        printInventory: function () {
+
+        getPromotion: function (inputs) {
+            let allPromotionsBarcode = loadPromotions();
+            let items = this.getCount(inputs);
+
+            return Object.keys(items).reduce((accu, curr) => {
+                 allPromotionsBarcode.forEach((promotion) => {
+                    if(promotion.barcodes.indexOf(curr.trim()) > -1 && items[curr] >2)
+                        accu.push({barcode: curr, number: 1});
+                    } );
+                return accu;
+                }, []);
+        },
+        buildOrderList:function (inputs) {
+            let orders = this.getOrder(inputs);
+            let promotions = this.getPromotion(inputs);
+            return orders.reduce((acc,curr) =>{
+                let summary = curr.price * curr.number;
+                promotions.forEach(it => {
+                    if (it.barcode === curr.barcode)
+                        summary = curr.price*(curr.number - it.number);
+                });
+                acc +=`名称：${curr.name}，数量：${curr.number}${curr.unit}，单价：${curr.price.toFixed(2)}(元)，小计：${summary.toFixed(2)}(元)\n`;
+                return acc;
+            },'***<没钱赚商店>购物清单***\n' );
+        },
+        buildPromotionInformation:function (inputs) {
+            let promotions = this.getPromotion(inputs);
+            let orders = this.getOrder(inputs);
+
+            return promotions.reduce((accu,curr)=> {
+                let orderItem = orders.filter((odr)=>{
+                    return (odr.barcode === curr.barcode);
+                });
+                accu += `名称：${orderItem[0].name}，数量：${curr.number}${orderItem[0].unit}\n`;
+                return accu;
+
+            },'----------------------\n挥泪赠送商品：\n');
+
+        },
+        buildSummaryInfomation:function (inputs) {
+            let promotions = this.getPromotion(inputs);
+            let orders = this.getOrder(inputs);
+            let obj = orders.reduce((accu,curr) =>{
+                let currSummary = curr.price * curr.number;
+                promotions.forEach(it => {
+                    if (it.barcode === curr.barcode){
+                        accu.discount += curr.price * it.number;
+                        currSummary = curr.price *(curr.number - it.number )
+                    }
+                });
+                accu.sum += currSummary;
+                return accu;
+
+
+            },{sum:0,discount:0});
+            return `----------------------\n`+
+                `总计：${obj.sum.toFixed(2)}(元)\n`+
+                `节省：${obj.discount.toFixed(2)}(元)\n`+
+                `**********************`;
+        },
+        printInventory: function (inputs) {
+            let expectText = this.buildOrderList(inputs) +
+                             this.buildPromotionInformation(inputs)+
+                             this.buildSummaryInfomation(inputs);
             console.log(expectText);
         }
     }
 };
-var expectText =
-    '***<没钱赚商店>购物清单***\n' +
-    '名称：雪碧，数量：5瓶，单价：3.00(元)，小计：12.00(元)\n' +
-    '名称：荔枝，数量：2斤，单价：15.00(元)，小计：30.00(元)\n' +
-    '名称：方便面，数量：3袋，单价：4.50(元)，小计：9.00(元)\n' +
-    '----------------------\n' +
-    '挥泪赠送商品：\n' +
-    '名称：雪碧，数量：1瓶\n' +
-    '名称：方便面，数量：1袋\n' +
-    '----------------------\n' +
-    '总计：51.00(元)\n' +
-    '节省：7.50(元)\n' +
-    '**********************';
+
 module.exports = main;

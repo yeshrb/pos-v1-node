@@ -72,7 +72,7 @@ describe('pos', function () {
 
     it('should get promotions', function () {
         let expt = [{barcode: 'ITEM000001', number: 1}, {barcode: 'ITEM000005', number: 1}];
-        expect(order.getPromotion(inputs)).toEqual(expt);
+        expect(order.getOrderPromotion(inputs)).toEqual(expt);
     });
 
     it('should build correct order list', function () {

@@ -1,29 +1,21 @@
 const loadAllItems = require('../main/datbase').loadAllItems;
 const allPromotions = require('../main/datbase').loadPromotions();
 
-const main = function (items) {
-    let order = getOrder(items);
-    let orderItems = getCount(items);
-    return {
-        getOrderItems:  () => {return orderItems},
-        getOrderDetails:  ()=> {return order},
 
-        getPromotion: function (inputs) {
-            let items = this.getOrderItems();
-            return Object.keys(items).reduce((accu, curr) => {
-                 allPromotions.forEach((promotion) => {
-                    if(promotion.barcodes.indexOf(curr.trim()) > -1 && items[curr] >2)
-                        accu.push({barcode: curr, number: 1});
-                    } );
-                return accu;
-                }, []);
-        },
+
+const main = function (items) {
+    let _order = getOrder(items);
+    let _orderItems = getCount(items);
+    let _promotions = getPromotions(items);
+    return {
+        getOrderItems:  () =>  _orderItems,
+        getOrderDetails:  ()=> _order,
+        getOrderPromotion: ()=>  _promotions,
         buildOrderList:function (inputs) {
-            let orders = this.getOrderDetails(inputs);
-            let promotions = this.getPromotion(inputs);
-            return orders.reduce((acc,curr) =>{
+            let promotions = this.getOrderPromotion(inputs);
+            return _order.reduce((acc,curr) =>{
                 let summary = curr.price * curr.number;
-                promotions.forEach(it => {
+                _promotions.forEach(it => {
                     if (it.barcode === curr.barcode)
                         summary = curr.price*(curr.number - it.number);
                 });
@@ -32,7 +24,7 @@ const main = function (items) {
             },'***<没钱赚商店>购物清单***\n' );
         },
         buildPromotionInformation:function (inputs) {
-            let promotions = this.getPromotion(inputs);
+            let promotions = this.getOrderPromotion(inputs);
             let orders = this.getOrderDetails(inputs);
 
             return promotions.reduce((accu,curr)=> {
@@ -46,7 +38,7 @@ const main = function (items) {
 
         },
         buildSummaryInfomation:function (inputs) {
-            let promotions = this.getPromotion(inputs);
+            let promotions = this.getOrderPromotion(inputs);
             let orders = this.getOrderDetails(inputs);
             let obj = orders.reduce((accu,curr) =>{
                 let currSummary = curr.price * curr.number;
@@ -100,4 +92,14 @@ function getOrder(inputs) {
         return acc;
     }, []);
 };
+function getPromotions(inputs) {
+    let items = getCount(inputs);
+    return Object.keys(items).reduce((accu, curr) => {
+        allPromotions.forEach((promotion) => {
+            if (promotion.barcodes.indexOf(curr.trim()) > -1 && items[curr] > 2)
+                accu.push({barcode: curr, number: 1});
+        });
+        return accu;
+    }, []);
+}
 module.exports = main;
